@@ -25,7 +25,7 @@ from reporter       import Reporter
 # For mobile camera, replace with your phone's IP:
 # CAMERA_SOURCE = "http://192.168.x.x:8080/video"
 CAMERA_SOURCE   = 0
-MODEL_PATH      = "yolov8n.pt"
+MODEL_PATH      = "yolo11n.pt"
 EMPLOYEES_FILE  = "../employee_data/employees.json"
 REPORT_PATH     = "../reports/employee_safety.xlsx"
 

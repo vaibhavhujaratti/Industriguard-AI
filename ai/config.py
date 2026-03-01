@@ -9,7 +9,7 @@
 #   "http://192.168.x.x:8080/video" → Mobile camera (primary)
 #   "video.mp4"                    → Recorded video (testing)
 
-CAMERA_SOURCE = "http://192.168.0.101:8080/video"
+CAMERA_SOURCE = 0
 
 # Set to True to use webcam instead (quick fallback)
 USE_WEBCAM_FALLBACK = False
@@ -18,7 +18,7 @@ USE_WEBCAM_FALLBACK = False
 BACKEND_URL = "http://localhost:5000"
 
 # ── AI Model Settings ──────────────────────────────────────
-MODEL_PATH = "yolov8n.pt"  # Replace with PPE model later
+MODEL_PATH = "yolo11n.pt"  # Replace with PPE model later
 
 # ── File Paths ─────────────────────────────────────────────
 EMPLOYEES_FILE = "../employee_data/employees.json"

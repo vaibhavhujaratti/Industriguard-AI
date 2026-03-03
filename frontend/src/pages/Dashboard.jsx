@@ -3,7 +3,6 @@ import StatCards       from "../components/StatCards";
 import EmployeeTable   from "../components/EmployeeTable";
 import TrendChart      from "../components/TrendChart";
 import CheckHistory    from "../components/CheckHistory";
-import DepartmentChart from "../components/DepartmentChart";
 
 const API = "http://localhost:5000";
 
@@ -12,33 +11,29 @@ export default function Dashboard({ latestUpdate }) {
   const [employees,   setEmployees]   = useState([]);
   const [trend,       setTrend]       = useState([]);
   const [checks,      setChecks]      = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [loading,     setLoading]     = useState(true);
 
   const fetchAll = useCallback(async () => {
     try {
-      const [statsRes, empRes, trendRes, checksRes, deptRes] = await Promise.all([
+      const [statsRes, empRes, trendRes, checksRes] = await Promise.all([
         fetch(`${API}/api/stats`),
         fetch(`${API}/api/employees/status`),
         fetch(`${API}/api/trend`),
-        fetch(`${API}/api/checks?limit=30`),
-        fetch(`${API}/api/departments`)
+        fetch(`${API}/api/checks?limit=30`)
       ]);
 
-      const [statsData, empData, trendData, checksData, deptData] = await Promise.all([
+      const [statsData, empData, trendData, checksData] = await Promise.all([
         statsRes.json(),
         empRes.json(),
         trendRes.json(),
-        checksRes.json(),
-        deptRes.json()
+        checksRes.json()
       ]);
 
       setStats(statsData);
       setEmployees(empData);
       setTrend(trendData);
       setChecks(checksData);
-      setDepartments(deptData);
       setLastRefresh(new Date().toLocaleTimeString());
       setLoading(false);
     } catch (err) {
@@ -102,11 +97,8 @@ export default function Dashboard({ latestUpdate }) {
       {/* Employee status table — full width */}
       <EmployeeTable employees={employees} latestUpdate={latestUpdate} />
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <TrendChart trend={trend} />
-        <DepartmentChart departments={departments} />
-      </div>
+      {/* Trend chart */}
+      <TrendChart trend={trend} />
 
       {/* Check history */}
       <CheckHistory checks={checks} />

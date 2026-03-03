@@ -15,7 +15,7 @@ from config import (
 )
 
 from camera_feed    import CameraFeed
-from qr_scanner     import QRScanner
+from qr_scanner_opencv import QRScanner  # Using OpenCV QR detector (no pyzbar)
 from ppe_detector   import PPEDetector
 from safety_status  import SafetyStatus
 from excel_reporter import ExcelReporter

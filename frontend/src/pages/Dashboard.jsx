@@ -4,6 +4,12 @@ import EmployeeTable   from "../components/EmployeeTable";
 import TrendChart      from "../components/TrendChart";
 import DepartmentChart from "../components/DepartmentChart";
 import CheckHistory    from "../components/CheckHistory";
+import {
+  buildDashboardWorkbook,
+  workbookToBlob,
+  formatDashboardExportFilename,
+  createAndClickDownload,
+} from "../lib/exportDashboardExcel";
 
 const API = "http://localhost:5000";
 
@@ -15,6 +21,9 @@ export default function Dashboard({ latestUpdate }) {
   const [checks,      setChecks]      = useState([]);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [loading,     setLoading]     = useState(true);
+  const [excelUrl,    setExcelUrl]    = useState(null);
+  const [excelName,   setExcelName]   = useState(null);
+  const [autoDownloadExcel, setAutoDownloadExcel] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -41,11 +50,37 @@ export default function Dashboard({ latestUpdate }) {
       setChecks(checksData);
       setLastRefresh(new Date().toLocaleTimeString());
       setLoading(false);
+
+      // Auto-generate a fresh Excel export whenever dashboard data refreshes
+      try {
+        const wb = buildDashboardWorkbook({
+          stats: statsData,
+          employees: empData,
+          trend: trendData,
+          departments: deptData,
+          checks: checksData,
+        });
+        const blob = workbookToBlob(wb);
+        const nextUrl = URL.createObjectURL(blob);
+        const nextName = formatDashboardExportFilename(new Date());
+
+        setExcelName(nextName);
+        setExcelUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return nextUrl;
+        });
+
+        if (autoDownloadExcel) {
+          createAndClickDownload(nextUrl, nextName);
+        }
+      } catch (e) {
+        console.error("Excel export generation failed:", e);
+      }
     } catch (err) {
       console.error("Fetch error:", err);
       setLoading(false);
     }
-  }, []);
+  }, [autoDownloadExcel]);
 
   // Initial fetch
   useEffect(() => {
@@ -65,6 +100,13 @@ export default function Dashboard({ latestUpdate }) {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (excelUrl) URL.revokeObjectURL(excelUrl);
+    };
+  }, [excelUrl]);
+
   if (loading) {
     return (
       <div
@@ -83,17 +125,50 @@ export default function Dashboard({ latestUpdate }) {
     <div className="p-6 max-w-screen-2xl mx-auto">
       {/* Last refresh indicator */}
       {lastRefresh && (
-        <p
-          className="text-xs mb-4"
-          style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
-        >
-          Last updated: {lastRefresh}
-          {latestUpdate && (
-            <span style={{ color: "var(--green)" }}>
-              {" "}· Live update received from {latestUpdate.employee_id}
-            </span>
-          )}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <p
+            className="text-xs"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
+          >
+            Last updated: {lastRefresh}
+            {latestUpdate && (
+              <span style={{ color: "var(--green)" }}>
+                {" "}· Live update received from {latestUpdate.employee_id}
+              </span>
+            )}
+          </p>
+
+          <div className="flex items-center gap-3">
+            <label
+              className="text-xs inline-flex items-center gap-2 select-none"
+              style={{ color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}
+            >
+              <input
+                type="checkbox"
+                checked={autoDownloadExcel}
+                onChange={(e) => setAutoDownloadExcel(e.target.checked)}
+              />
+              Auto-download Excel on refresh
+            </label>
+
+            <a
+              href={excelUrl || undefined}
+              download={excelName || undefined}
+              className="px-3 py-1.5 text-xs font-semibold tracking-wider uppercase rounded transition-all"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: excelUrl ? "var(--amber-glow)" : "transparent",
+                color: excelUrl ? "var(--amber)" : "var(--text-secondary)",
+                border: `1px solid ${excelUrl ? "var(--amber-dim)" : "var(--border)"}`,
+                pointerEvents: excelUrl ? "auto" : "none",
+                opacity: excelUrl ? 1 : 0.6,
+              }}
+              title={excelUrl ? "Download the latest dashboard export" : "Export will appear after data loads"}
+            >
+              Download Excel
+            </a>
+          </div>
+        </div>
       )}
 
       {/* Stat cards */}
